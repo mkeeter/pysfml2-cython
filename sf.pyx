@@ -809,7 +809,7 @@ cdef class Sound:
         def __get__(self):
             return self.p_this.GetPlayingOffset()
 
-        def __set__(self, float value):
+        def __set__(self, int value):
             self.p_this.SetPlayingOffset(value)
 
     property position:
@@ -1115,7 +1115,7 @@ cdef class Input:
             return self.get_mouse_y()
 
     def get_joystick_axis(self, unsigned int joy_id, int axis):
-        return self.GetJoystickAxis(joy_id, axis)
+        return self.p_this.GetJoystickAxis(joy_id, <decljoy.Axis>axis)
 
     def get_mouse_x(self):
          return self.p_this.GetMouseX()

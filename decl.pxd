@@ -33,6 +33,7 @@ from libcpp.vector cimport vector
 
 cimport declblendmode
 cimport declkey
+cimport decljoy
 cimport declmouse
 
 
@@ -152,7 +153,7 @@ cdef extern from "SFML/Graphics.hpp" namespace "sf":
 
     cdef cppclass Clock:
         Clock()
-        float GetElapsedTime()
+        Uint32 GetElapsedTime()
         void Reset()
 
     cdef cppclass Color:
@@ -183,7 +184,7 @@ cdef extern from "SFML/Graphics.hpp" namespace "sf":
         bint IsJoystickButtonDown(unsigned int JoyId, unsigned int Button)
         int GetMouseX()
         int GetMouseY()
-        float GetJoystickAxis(unsigned int JoyId, int Axis)
+        float GetJoystickAxis(unsigned int JoyId, decljoy.Axis Axis)
 
     cdef cppclass VideoMode:
         VideoMode()
@@ -394,7 +395,7 @@ cdef extern from "SFML/Graphics.hpp" namespace "sf":
         void Draw(Drawable&, Shader&)
         void EnableKeyRepeat(bint)
         View& GetDefaultView()
-        float GetFrameTime()
+        Uint32 GetFrameTime()
         Input& GetInput()
         unsigned int GetHeight()
         ContextSettings& GetSettings()
