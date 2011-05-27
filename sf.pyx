@@ -1024,7 +1024,7 @@ class Event:
 
 # Create an Python Event object that matches the C++ object
 # by dynamically setting the corresponding attributes.
-cdef wrap_event_instance(decl.Event p_cpp_instance):
+cdef wrap_event_instance(decl.Event *p_cpp_instance):
     cdef ret = Event()
 
     # Set the type
@@ -1095,6 +1095,7 @@ cdef wrap_event_instance(decl.Event p_cpp_instance):
         ret.axis = p_cpp_instance.JoyMove.Axis
         ret.position = p_cpp_instance.JoyMove.Position
         
+    del p_cpp_instance
     return ret
 
 
@@ -2151,11 +2152,11 @@ cdef class RenderWindow:
         return self
 
     def __next__(self):
-        cdef decl.Event p = decl.Event()
+        cdef decl.Event *p = new decl.Event()
 
-        if self.p_this.PollEvent(p):
+        if self.p_this.PollEvent(p[0]):
             return wrap_event_instance(p)
-
+        del p
         raise StopIteration
 
     property active:
@@ -2313,10 +2314,11 @@ cdef class RenderWindow:
         return self
 
     def poll_event(self):
-        cdef decl.Event p = decl.Event()
+        cdef decl.Event *p = new decl.Event()
 
-        if self.p_this.PollEvent(p):
+        if self.p_this.PollEvent(p[0]):
             return wrap_event_instance(p)
+        del p
         
     def restore_gl_states(self):
         self.p_this.RestoreGLStates()
@@ -2331,10 +2333,11 @@ cdef class RenderWindow:
         self.p_this.Show(show)
 
     def wait_event(self):
-        cdef decl.Event p = decl.Event()
+        cdef decl.Event *p = new decl.Event()
 
-        if self.p_this.WaitEvent(p):
+        if self.p_this.WaitEvent(p[0]):
             return wrap_event_instance(p)
+        del p
 
 
 
