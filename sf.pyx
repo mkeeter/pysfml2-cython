@@ -2551,7 +2551,8 @@ cdef class Shape(Drawable):
 
 cdef Shape wrap_shape_instance(decl.Shape *p_cpp_instance):
     cdef Shape ret = Shape.__new__(Shape)
-
+    del ret.p_this
+    
     ret.p_this = <decl.Drawable*>p_cpp_instance
     
     return ret
