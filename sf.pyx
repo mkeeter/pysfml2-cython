@@ -416,6 +416,13 @@ cdef class Vector2f:
             return self
         return NotImplemented
 
+    def __getitem__(self, c):
+        if c == 0:
+            return self.p_this.x
+        elif c == 1:
+            return self.p_this.y
+        return float("NaN")
+
     def copy(self):
         return Vector2f(self.p_this.x, self.p_this.y)
 
@@ -1358,6 +1365,24 @@ cdef class Image:
             else:
                 self.p_this.Copy(source.p_this[0], dest_x, dest_y,
                                  cpp_source_rect, apply_alpha)
+
+    def copy_screen(self, RenderWindow window, source_rect=None):
+        cdef decl.IntRect cpp_source_rect
+        
+        if source_rect is None:
+            self.p_this.CopyScreen(window.p_this[0])
+        else:
+            if isinstance(source_rect, tuple):
+                cpp_source_rect = decl.IntRect(source_rect[0],
+                                               source_rect[1],
+                                               source_rect[2],
+                                               source_rect[3])
+            elif isinstance(source_rect, IntRect):
+                cpp_source_rect = (<IntRect>source_rect).p_this[0]
+            else:
+                raise TypeError('source_rect must be tuple or IntRect')
+                
+            self.p_this.CopyScreen(window.p_this[0], cpp_source_rect)
 
     def create_mask_from_color(self, Color color, int alpha=0):
         self.p_this.CreateMaskFromColor(color.p_this[0], alpha)
