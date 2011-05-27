@@ -1990,7 +1990,8 @@ cdef class View:
 
 cdef View wrap_view_instance(decl.View *p_cpp_view):
     cdef View ret = View.__new__(View)
-
+    del ret.p_this
+    
     ret.p_this = p_cpp_view
 
     return ret
