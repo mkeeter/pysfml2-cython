@@ -421,7 +421,7 @@ cdef class Vector2f:
             return self.p_this.x
         elif c == 1:
             return self.p_this.y
-        return float("NaN")
+        raise NotImplementedError("Out of bounds index into a Vector2f")
 
     def copy(self):
         return Vector2f(self.p_this.x, self.p_this.y)
