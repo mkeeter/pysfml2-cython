@@ -393,6 +393,7 @@ cdef extern from "SFML/Graphics.hpp" namespace "sf":
         void Display()
         void Draw(Drawable&)
         void Draw(Drawable&, Shader&)
+        void EnableVerticalSync(bint)
         void EnableKeyRepeat(bint)
         View& GetDefaultView()
         Uint32 GetFrameTime()

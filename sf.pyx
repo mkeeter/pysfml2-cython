@@ -419,6 +419,10 @@ cdef class Vector2f:
     def copy(self):
         return Vector2f(self.p_this.x, self.p_this.y)
 
+    def length(self):
+        return (self.p_this.x * self.p_this.x + 
+                self.p_this.y * self.p_this.y) ** (0.5)
+
     property x:
         def __get__(self):
             return self.p_this.x
@@ -2229,6 +2233,10 @@ cdef class RenderWindow:
     property title:
         def __set__(self, char* value):
             self.p_this.SetTitle(value)
+
+    property vertical_sync_enabled:
+        def __set__(self, bint value):
+            self.p_this.EnableVerticalSync(value)
 
     property view:
         def __get__(self):
