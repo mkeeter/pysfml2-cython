@@ -67,24 +67,71 @@ cdef class Mouse:
     X_BUTTON2 = declmouse.XButton2
     BUTTON_COUNT = declmouse.ButtonCount
 
+    @classmethod
+    def is_button_pressed(cls, int button):
+        return declmouse.IsButtonPressed(<declmouse.Button>button)
+
+    @classmethod
+    def get_position(cls, RenderWindow window=None):
+        cdef decl.Vector2i pos
+
+        if window is None:
+            pos = declmouse.GetPosition()
+        else:
+            pos = declmouse.GetPosition(window.p_this[0])
+
+        return (pos.x, pos.y)
+
+    @classmethod
+    def set_position(cls, tuple position, RenderWindow window=None):
+        cdef decl.Vector2i cpp_pos
+
+        cpp_pos.x, cpp_pos.y = position
+
+        if window is None:
+            declmouse.SetPosition(cpp_pos)
+        else:
+            declmouse.SetPosition(cpp_pos, window.p_this[0])
 
 
-cdef class Joy:
-    AXIS_X = decljoy.AxisX
-    AXIS_Y = decljoy.AxisY
-    AXIS_Z = decljoy.AxisZ
-    AXIS_R = decljoy.AxisR
-    AXIS_U = decljoy.AxisU
-    AXIS_V = decljoy.AxisV
-    AXIS_POV = decljoy.AxisPOV
-    AXIS_COUNT = decljoy.AxisCount
 
+cdef class Joystick:
     COUNT = decljoy.Count
     BUTTON_COUNT = decljoy.ButtonCount
+    AXIS_COUNT = decljoy.AxisCount
+    X = decljoy.X
+    Y = decljoy.Y
+    Z = decljoy.Z
+    R = decljoy.R
+    U = decljoy.U
+    V = decljoy.V
+    POV_X = decljoy.PovX
+    POV_Y = decljoy.PovY
+
+    @classmethod
+    def is_connected(cls, unsigned int joystick):
+        return decljoy.IsConnected(joystick)
+
+    @classmethod
+    def get_button_count(cls, unsigned int joystick):
+        return decljoy.GetButtonCount(joystick)
+
+    @classmethod
+    def has_axis(cls, unsigned int joystick, int axis):
+        return decljoy.HasAxis(joystick, <decljoy.Axis>axis)
+
+    @classmethod
+    def is_button_pressed(cls, unsigned int joystick, unsigned int button):
+        return decljoy.IsButtonPressed(joystick, button)
+
+    @classmethod
+    def get_axis_position(cls, unsigned int joystick, int axis):
+        return decljoy.GetAxisPosition(joystick, <decljoy.Axis> axis)
+
+    
 
 
-
-cdef class Key:
+cdef class Keyboard:
     A = declkey.A
     B = declkey.B
     C = declkey.C
@@ -186,8 +233,11 @@ cdef class Key:
     F14 = declkey.F14
     F15 = declkey.F15
     PAUSE = declkey.Pause
-    COUNT = declkey.Count
+    KEY_COUNT = declkey.KeyCount
 
+    @classmethod
+    def is_key_pressed(cls, int key):
+        return declkey.IsKeyPressed(<declkey.Key>key)
 
 
 cdef class BlendMode:
@@ -989,9 +1039,11 @@ class Event:
     MOUSE_MOVED = declevent.MouseMoved
     MOUSE_ENTERED = declevent.MouseEntered
     MOUSE_LEFT = declevent.MouseLeft
-    JOY_BUTTON_PRESSED = declevent.JoyButtonPressed
-    JOY_BUTTON_RELEASED = declevent.JoyButtonReleased
-    JOY_MOVED = declevent.JoyMoved
+    JOYSTICK_BUTTON_PRESSED = declevent.JoystickButtonPressed
+    JOYSTICK_BUTTON_RELEASED = declevent.JoystickButtonReleased
+    JOYSTICK_MOVED = declevent.JoystickMoved
+    JOYSTICK_CONNECTED = declevent.JoystickConnected
+    JOYSTICK_DISCONNECTED = declevent.JoystickDisconnected
     COUNT = declevent.Count
 
     NAMES = {
@@ -1008,9 +1060,11 @@ class Event:
         MOUSE_MOVED: 'Mouse moved',
         MOUSE_ENTERED: 'Mouse entered',
         MOUSE_LEFT: 'Mouse left',
-        JOY_BUTTON_PRESSED: 'Joystick button pressed',
-        JOY_BUTTON_RELEASED: 'Joystick button released',
-        JOY_MOVED: 'Joystick moved'
+        JOYSTICK_BUTTON_PRESSED: 'Joystick button pressed',
+        JOYSTICK_BUTTON_RELEASED: 'Joystick button released',
+        JOYSTICK_MOVED: 'Joystick moved',
+        JOYSTICK_CONNECTED: 'Joystick connected',
+        JOYSTICK_DISCONNECTED: 'Joystick disconnected'
         }
 
     def __str__(self):
@@ -1054,12 +1108,16 @@ cdef wrap_event_instance(decl.Event *p_cpp_instance):
         ret.type = Event.MOUSE_ENTERED
     elif p_cpp_instance.Type == declevent.MouseLeft:
         ret.type = Event.MOUSE_LEFT
-    elif p_cpp_instance.Type == declevent.JoyButtonPressed:
-        ret.type = Event.JOY_BUTTON_PRESSED
-    elif p_cpp_instance.Type == declevent.JoyButtonReleased:
-        ret.type = Event.JOY_BUTTON_RELEASED
-    elif p_cpp_instance.Type == declevent.JoyMoved:
-        ret.type = Event.JOY_MOVED
+    elif p_cpp_instance.Type == declevent.JoystickButtonPressed:
+        ret.type = Event.JOYSTICK_BUTTON_PRESSED
+    elif p_cpp_instance.Type == declevent.JoystickButtonReleased:
+        ret.type = Event.JOYSTICK_BUTTON_RELEASED
+    elif p_cpp_instance.Type == declevent.JoystickMoved:
+        ret.type = Event.JOYSTICK_MOVED
+    elif p_cpp_instance.Type == declevent.JoystickConnected:
+        ret.type = Event.JOYSTICK_CONNECTED
+    elif p_cpp_instance.Type == declevent.JoystickDisconnected:
+        ret.type = Event.JOYSTICK_DISCONNECTED
 
     # Set other attributes if needed
     if p_cpp_instance.Type == declevent.Resized:
@@ -1087,58 +1145,18 @@ cdef wrap_event_instance(decl.Event *p_cpp_instance):
         ret.delta = p_cpp_instance.MouseWheel.Delta
         ret.x = p_cpp_instance.MouseWheel.X
         ret.y = p_cpp_instance.MouseWheel.Y
-    elif (p_cpp_instance.Type == declevent.JoyButtonPressed or
-          p_cpp_instance.Type == declevent.JoyButtonReleased):
-        ret.joystick_id = p_cpp_instance.JoyButton.JoystickId
-        ret.button = p_cpp_instance.JoyButton.Button
-    elif p_cpp_instance.Type == declevent.JoyMoved:
-        ret.joystick_id = p_cpp_instance.JoyMove.JoystickId
-        ret.axis = p_cpp_instance.JoyMove.Axis
-        ret.position = p_cpp_instance.JoyMove.Position
-        
-    del p_cpp_instance
-    return ret
-
-
-
-
-cdef class Input:
-    cdef decl.Input *p_this
-
-    def __init__(self):
-        raise NotImplementedError("You shouldn't need to create Input objects")
-
-    property mouse_x:
-        def __get__(self):
-            return self.get_mouse_x()
-
-    property mouse_y:
-        def __get__(self):
-            return self.get_mouse_y()
-
-    def get_joystick_axis(self, unsigned int joy_id, int axis):
-        return self.p_this.GetJoystickAxis(joy_id, <decljoy.Axis>axis)
-
-    def get_mouse_x(self):
-         return self.p_this.GetMouseX()
-
-    def get_mouse_y(self):
-         return self.p_this.GetMouseY()
-
-    def is_key_down(self, int key_code):
-         return self.p_this.IsKeyDown(<declkey.Code>key_code)
-
-    def is_mouse_button_down(self, int button):
-         return self.p_this.IsMouseButtonDown(<declmouse.Button>button)
-
-    def is_joystick_button_down(self, unsigned int joy_id, unsigned int button):
-         return self.p_this.IsJoystickButtonDown(joy_id, button)
-
-
-cdef wrap_input_instance(decl.Input *p_cpp_instance):
-    cdef Input ret = Input.__new__(Input)
-
-    ret.p_this = p_cpp_instance
+    elif (p_cpp_instance.Type == declevent.JoystickButtonPressed or
+          p_cpp_instance.Type == declevent.JoystickButtonReleased):
+        ret.joystick_id = p_cpp_instance.JoystickButton.JoystickId
+        ret.button = p_cpp_instance.JoystickButton.Button
+    elif p_cpp_instance.Type == declevent.JoystickMoved:
+        ret.joystick_id = p_cpp_instance.JoystickMove.JoystickId
+        ret.axis = p_cpp_instance.JoystickMove.Axis
+        ret.position = p_cpp_instance.JoystickMove.Position
+    elif p_cpp_instance.Type == declevent.JoystickConnected:
+        ret.joystick_id = p_cpp_instance.JoystickConnect.JoystickId
+    elif p_cpp_instance.Type == declevent.JoystickDisconnected:
+        ret.joystick_id = p_cpp_instance.JoystickConnect.JoystickId
 
     return ret
 
@@ -1778,6 +1796,125 @@ cdef class Sprite(Drawable):
 
 
 
+
+cdef class Shape(Drawable):
+    def __init__(self):
+        self.p_this = <decl.Drawable*>new decl.Shape()
+    
+    def __dealloc__(self):
+        del self.p_this
+    
+    property fill_enabled:
+        def __set__(self, bint value):
+            (<decl.Shape*>self.p_this).EnableFill(value)
+
+    property outline_enabled:
+        def __set__(self, bint value):
+            (<decl.Shape*>self.p_this).EnableOutline(value)
+
+    property outline_thickness:
+        def __get__(self):
+            return (<decl.Shape*>self.p_this).GetOutlineThickness()
+
+        def __set__(self, float value):
+            (<decl.Shape*>self.p_this).SetOutlineThickness(value)
+
+    property points_count:
+        def __get__(self):
+            return (<decl.Shape*>self.p_this).GetPointsCount()
+
+    @classmethod
+    def line(cls, float p1x, float p1y, float p2x, float p2y, float thickness,
+             Color color, float outline=0.0, Color outline_color=None):
+        cdef decl.Shape *p = new decl.Shape()
+
+        if outline_color is None:
+            p[0] = decl.Line(p1x, p1y, p2x, p2y, thickness, color.p_this[0],
+                             outline)
+        else:
+            p[0] = decl.Line(p1x, p1y, p2x, p2y, thickness, color.p_this[0],
+                             outline, outline_color.p_this[0])
+
+        return wrap_shape_instance(p)
+
+    @classmethod
+    def rectangle(cls, float left, float top, float width, float height,
+                  Color color, float outline=0.0, Color outline_color=None):
+        cdef decl.Shape *p = new decl.Shape()
+
+        if outline_color is None:
+            p[0] = decl.Rectangle(left, top, width, height, color.p_this[0],
+                                  outline)
+        else:
+            p[0] = decl.Rectangle(left, top, width, height, color.p_this[0],
+                                  outline, outline_color.p_this[0])
+
+        return wrap_shape_instance(p)
+
+    @classmethod
+    def circle(cls, float x, float y, float radius, Color color,
+               float outline=0.0, Color outline_color=None):
+        cdef decl.Shape *p = new decl.Shape()
+
+        if outline_color is None:
+            p[0] = decl.Circle(x, y, radius, color.p_this[0], outline)
+        else:
+            p[0] = decl.Circle(x, y, radius, color.p_this[0], outline,
+                               outline_color.p_this[0])
+
+        return wrap_shape_instance(p)
+
+    def add_point(self, float x, float y, Color color=None,
+                  Color outline_color=None):
+        if color is None:
+            (<decl.Shape*>self.p_this).AddPoint(x, y)
+        elif outline_color is None:
+            (<decl.Shape*>self.p_this).AddPoint(x, y, color.p_this[0])
+        else:
+            (<decl.Shape*>self.p_this).AddPoint(x, y, color.p_this[0],
+                                                outline_color.p_this[0])
+
+    def get_point_color(self, unsigned int index):
+        cdef decl.Color *p = new decl.Color()
+
+        p[0] = (<decl.Shape*>self.p_this).GetPointColor(index)
+
+        return wrap_color_instance(p)
+
+    def get_point_outline_color(self, unsigned int index):
+        cdef decl.Color *p = new decl.Color()
+
+        p[0] = (<decl.Shape*>self.p_this).GetPointOutlineColor(index)
+
+        return wrap_color_instance(p)
+
+    def get_point_position(self, unsigned int index):
+        cdef decl.Vector2f pos
+
+        pos = (<decl.Shape*>self.p_this).GetPointPosition(index)
+
+        return (pos.x, pos.y)
+
+    def set_point_color(self, unsigned int index, Color color):
+        (<decl.Shape*>self.p_this).SetPointColor(index, color.p_this[0])
+
+    def set_point_outline_color(self, unsigned int index, Color color):
+        (<decl.Shape*>self.p_this).SetPointOutlineColor(index, color.p_this[0])
+
+    def set_point_position(self, unsigned int index, float x, float y):
+        (<decl.Shape*>self.p_this).SetPointPosition(index, x, y)
+    
+
+cdef Shape wrap_shape_instance(decl.Shape *p_cpp_instance):
+    cdef Shape ret = Shape.__new__(Shape)
+
+    ret.p_this = <decl.Drawable*>p_cpp_instance
+    
+    return ret
+
+
+
+
 cdef class VideoMode:
     cdef decl.VideoMode *p_this
     cdef bint delete_this
@@ -1900,9 +2037,16 @@ cdef VideoMode wrap_video_mode_instance(decl.VideoMode *p_cpp_instance,
 
 cdef class View:
     cdef decl.View *p_this
+    # A RenderTarget (e.g., a RenderWindow or a RenderImage) can be
+    # bound to the view. Every time the view is changed, the target
+    # will be automatically updated. The target object must have a
+    # view property.  This is used so that code like
+    # window.view.mode(10, 10) works as expected.
+    cdef object render_target
 
     def __init__(self):
         self.p_this = new decl.View()
+        self.window = None
 
     def __dealloc__(self):
         del self.p_this
@@ -1917,6 +2061,7 @@ cdef class View:
             cdef decl.Vector2f v = convert_to_vector2f(value)
 
             self.p_this.SetCenter(v.x, v.y)
+            self._update_target()
 
     property height:
         def __get__(self):
@@ -1924,6 +2069,7 @@ cdef class View:
 
         def __set__(self, float value):
             self.size = (self.width, value)
+            self._update_target()
 
     property rotation:
         def __get__(self):
@@ -1931,6 +2077,7 @@ cdef class View:
 
         def __set__(self, float value):
             self.p_this.SetRotation(value)
+            self._update_target()
 
     property size:
         def __get__(self):
@@ -1942,6 +2089,7 @@ cdef class View:
             cdef decl.Vector2f v = convert_to_vector2f(value)
 
             self.p_this.SetSize(v.x, v.y)
+            self._update_target()
 
     property viewport:
         def __get__(self):
@@ -1953,6 +2101,7 @@ cdef class View:
 
         def __set__(self, FloatRect value):
             self.p_this.SetViewport(value.p_this[0])
+            self._update_target()
 
     property width:
         def __get__(self):
@@ -1960,6 +2109,7 @@ cdef class View:
 
         def __set__(self, float value):
             self.size = (value, self.height)
+            self._update_target()
 
     @classmethod
     def from_center_and_size(cls, center, size):
@@ -1969,32 +2119,41 @@ cdef class View:
 
         p = new decl.View(cpp_center, cpp_size)
 
-        return wrap_view_instance(p)
+        return wrap_view_instance(p, None)
         
     @classmethod
     def from_rect(cls, FloatRect rect):
         cdef decl.View *p = new decl.View(rect.p_this[0])
 
-        return wrap_view_instance(p)
+        return wrap_view_instance(p, None)
+
+    def _update_target(self):
+        if self.render_target is not None:
+            self.render_target.view = self
 
     def move(self, float x, float y):
         self.p_this.Move(x, y)
+        self._update_target()
 
     def reset(self, FloatRect rect):
         self.p_this.Reset(rect.p_this[0])
+        self._update_target()
 
     def rotate(self, float angle):
         self.p_this.Rotate(angle)
+        self._update_target()
 
     def zoom(self, float factor):
         self.p_this.Zoom(factor)
+        self._update_target()
 
 
-cdef View wrap_view_instance(decl.View *p_cpp_view):
+cdef View wrap_view_instance(decl.View *p_cpp_view, object window):
     cdef View ret = View.__new__(View)
     del ret.p_this
     
     ret.p_this = p_cpp_view
+    ret.render_target = window
 
     return ret
 
@@ -2133,7 +2292,6 @@ cdef ContextSettings wrap_context_settings_instance(
 
 cdef class RenderWindow:
     cdef decl.RenderWindow *p_this
-    cdef Input input
 
     def __cinit__(self, VideoMode mode, char* title, int style=Style.DEFAULT,
                   ContextSettings settings=None):
@@ -2143,9 +2301,6 @@ cdef class RenderWindow:
             self.p_this = new decl.RenderWindow(mode.p_this[0], title, style,
                                                 settings.p_this[0])
 
-    def __init__(self, *args, **kwargs):
-        self.input = wrap_input_instance(NULL)
-
     def __dealloc__(self):
         del self.p_this
 
@@ -2153,21 +2308,16 @@ cdef class RenderWindow:
         return self
 
     def __next__(self):
-        cdef decl.Event *p = new decl.Event()
+        cdef decl.Event p
 
-        if self.p_this.PollEvent(p[0]):
-            return wrap_event_instance(p)
-        del p
+        if self.p_this.PollEvent(p):
+            return wrap_event_instance(&p)
+
         raise StopIteration
 
     property active:
         def __set__(self, bint value):
             self.p_this.SetActive(value)
-
-    property cursor_position:
-        def __set__(self, tuple value):
-            x, y = value
-            self.p_this.SetCursorPosition(x, y)
 
     property default_view:
         def __get__(self):
@@ -2175,7 +2325,7 @@ cdef class RenderWindow:
 
             p[0] = self.p_this.GetDefaultView()
 
-            return wrap_view_instance(p)
+            return wrap_view_instance(p, None)
 
     property framerate_limit:
         def __set__(self, int value):
@@ -2248,7 +2398,7 @@ cdef class RenderWindow:
 
             p[0] = self.p_this.GetView()
 
-            return wrap_view_instance(p)
+            return wrap_view_instance(p, self)
 
         def __set__(self, View value):
             self.p_this.SetView(value.p_this[0])
@@ -2294,11 +2444,6 @@ cdef class RenderWindow:
             self.p_this.Draw(drawable.p_this[0])
         else:
             self.p_this.Draw(drawable.p_this[0], shader.p_this[0])
-
-    def get_input(self):
-        self.input.p_this = <decl.Input*>&self.p_this.GetInput()
-
-        return self.input
 
     def get_viewport(self, View view):
         cdef decl.IntRect *p = new decl.IntRect()
@@ -2369,7 +2514,7 @@ cdef class RenderImage:
 
             p[0] = self.p_this.GetDefaultView()
 
-            return wrap_view_instance(p)
+            return wrap_view_instance(p, None)
 
     property height:
         def __get__(self):
@@ -2393,7 +2538,7 @@ cdef class RenderImage:
 
             p[0] = self.p_this.GetView()
 
-            return wrap_view_instance(p)
+            return wrap_view_instance(p, self)
 
         def __set__(self, View value):
             self.p_this.SetView(value.p_this[0])
@@ -2442,122 +2587,3 @@ cdef class RenderImage:
 
     def save_gl_states(self):
         self.p_this.SaveGLStates()
-
-
-
-
-cdef class Shape(Drawable):
-    def __init__(self):
-        self.p_this = <decl.Drawable*>new decl.Shape()
-    
-    def __dealloc__(self):
-        del self.p_this
-    
-    property fill_enabled:
-        def __set__(self, bint value):
-            (<decl.Shape*>self.p_this).EnableFill(value)
-
-    property outline_enabled:
-        def __set__(self, bint value):
-            (<decl.Shape*>self.p_this).EnableOutline(value)
-
-    property outline_thickness:
-        def __get__(self):
-            return (<decl.Shape*>self.p_this).GetOutlineThickness()
-
-        def __set__(self, float value):
-            (<decl.Shape*>self.p_this).SetOutlineThickness(value)
-
-    property points_count:
-        def __get__(self):
-            return (<decl.Shape*>self.p_this).GetPointsCount()
-
-    @classmethod
-    def line(cls, float p1x, float p1y, float p2x, float p2y, float thickness,
-             Color color, float outline=0.0, Color outline_color=None):
-        cdef decl.Shape *p = new decl.Shape()
-
-        if outline_color is None:
-            p[0] = decl.Line(p1x, p1y, p2x, p2y, thickness, color.p_this[0],
-                             outline)
-        else:
-            p[0] = decl.Line(p1x, p1y, p2x, p2y, thickness, color.p_this[0],
-                             outline, outline_color.p_this[0])
-
-        return wrap_shape_instance(p)
-
-    @classmethod
-    def rectangle(cls, float left, float top, float width, float height,
-                  Color color, float outline=0.0, Color outline_color=None):
-        cdef decl.Shape *p = new decl.Shape()
-
-        if outline_color is None:
-            p[0] = decl.Rectangle(left, top, width, height, color.p_this[0],
-                                  outline)
-        else:
-            p[0] = decl.Rectangle(left, top, width, height, color.p_this[0],
-                                  outline, outline_color.p_this[0])
-
-        return wrap_shape_instance(p)
-
-    @classmethod
-    def circle(cls, float x, float y, float radius, Color color,
-               float outline=0.0, Color outline_color=None):
-        cdef decl.Shape *p = new decl.Shape()
-
-        if outline_color is None:
-            p[0] = decl.Circle(x, y, radius, color.p_this[0], outline)
-        else:
-            p[0] = decl.Circle(x, y, radius, color.p_this[0], outline,
-                               outline_color.p_this[0])
-
-        return wrap_shape_instance(p)
-
-    def add_point(self, float x, float y, Color color=None,
-                  Color outline_color=None):
-        if color is None:
-            (<decl.Shape*>self.p_this).AddPoint(x, y)
-        elif outline_color is None:
-            (<decl.Shape*>self.p_this).AddPoint(x, y, color.p_this[0])
-        else:
-            (<decl.Shape*>self.p_this).AddPoint(x, y, color.p_this[0],
-                                                outline_color.p_this[0])
-
-    def get_point_color(self, unsigned int index):
-        cdef decl.Color *p = new decl.Color()
-
-        p[0] = (<decl.Shape*>self.p_this).GetPointColor(index)
-
-        return wrap_color_instance(p)
-
-    def get_point_outline_color(self, unsigned int index):
-        cdef decl.Color *p = new decl.Color()
-
-        p[0] = (<decl.Shape*>self.p_this).GetPointOutlineColor(index)
-
-        return wrap_color_instance(p)
-
-    def get_point_position(self, unsigned int index):
-        cdef decl.Vector2f pos
-
-        pos = (<decl.Shape*>self.p_this).GetPointPosition(index)
-
-        return (pos.x, pos.y)
-
-    def set_point_color(self, unsigned int index, Color color):
-        (<decl.Shape*>self.p_this).SetPointColor(index, color.p_this[0])
-
-    def set_point_outline_color(self, unsigned int index, Color color):
-        (<decl.Shape*>self.p_this).SetPointOutlineColor(index, color.p_this[0])
-
-    def set_point_position(self, unsigned int index, float x, float y):
-        (<decl.Shape*>self.p_this).SetPointPosition(index, x, y)
-    
-
-cdef Shape wrap_shape_instance(decl.Shape *p_cpp_instance):
-    cdef Shape ret = Shape.__new__(Shape)
-    del ret.p_this
-    
-    ret.p_this = <decl.Drawable*>p_cpp_instance
-    
-    return ret
