@@ -29,29 +29,31 @@
 # SUCH DAMAGE.
 
 
-# This file declares the mouse constants, in order to avoid clashes
+# This file declares the joystick constants, in order to avoid clashes
 # with other enums which have the same members
 
 
-cimport decl
-
-
-# Alias for the sf::Mouse::Button enum
-cdef extern from "SFML/Graphics.hpp" namespace "sf::Mouse":
-    cdef cppclass Button:
+cdef extern from "SFML/Graphics.hpp" namespace "sf::Joystick":
+    # Alias for the sf::Joystick::Axis enum
+    cdef cppclass Axis:
         pass
 
-
-cdef extern from "SFML/Graphics.hpp" namespace "sf::Mouse":
-    int Left
-    int Right
-    int Middle
-    int XButton1
-    int XButton2
+    int Count
     int ButtonCount
+    int AxisCount
+    int X
+    int Y
+    int Z
+    int R
+    int U
+    int V
+    int PovX
+    int PovY
 
-    cdef bint IsButtonPressed(Button)
-    cdef decl.Vector2i GetPosition()
-    cdef decl.Vector2i GetPosition(decl.RenderWindow&)
-    cdef void SetPosition(decl.Vector2i&)
-    cdef void SetPosition(decl.Vector2i&, decl.RenderWindow&)
+    bint isConnected(unsigned int)
+    unsigned int getButtonCount(unsigned int)
+    bint hasAxis(unsigned int, Axis)
+    bint isButtonPressed(unsigned int, unsigned int)
+    float getAxisPosition(unsigned int, Axis)
+    void update()
+

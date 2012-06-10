@@ -1,7 +1,7 @@
 #! /usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import sf
+import sfml as sf
 
 
 def main():
@@ -19,6 +19,7 @@ def main():
         window.clear(sf.Color.WHITE)
         window.draw(sprite)
         window.display()
+
     window.close()
 
 

@@ -29,30 +29,14 @@
 # SUCH DAMAGE.
 
 
-# This file declares the joystick constants, in order to avoid clashes
+# This file declares the event constants, in order to avoid clashes
 # with other enums which have the same members
 
 
-cdef extern from "SFML/Graphics.hpp" namespace "sf::Joystick":
-    # Alias for the sf::Joystick::Axis enum
-    cdef cppclass Axis:
-        pass
-
-    int Count
-    int ButtonCount
-    int AxisCount
-    int X
-    int Y
-    int Z
-    int R
-    int U
-    int V
-    int PovX
-    int PovY
-
-    bint IsConnected(unsigned int)
-    unsigned int GetButtonCount(unsigned int)
-    bint HasAxis(unsigned int, Axis)
-    bint IsButtonPressed(unsigned int, unsigned int)
-    float GetAxisPosition(unsigned int, Axis)
-
+cdef extern from "SFML/Graphics.hpp" namespace "sf::Renderer":
+    cdef cppclass PrimitiveType
+    
+    int TriangleList
+    int TriangleStrip
+    int TriangleFan
+    int QuadList

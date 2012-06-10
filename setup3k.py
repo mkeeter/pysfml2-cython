@@ -28,47 +28,88 @@
 # SUCH DAMAGE.
 
 
+# When creating a Windows installer, drop the SFML and dependent DLLs
+# in the current folder and they will be included in the installer.
+
+
 # Set to False if you don't have Cython installed. The script will
 # then build the extension module from the sf.cpp file, like a regular
 # extension.
-USE_CYTHON = False
+USE_CYTHON = True
 
 
+import glob
+import os.path
+import sys
 from distutils.core import setup
 from distutils.extension import Extension
+from distutils.command.build_ext import build_ext
 
 if USE_CYTHON:
-    from Cython.Distutils import build_ext
+    import Cython.Distutils
+
+
+def src(path):
+    return os.path.join('src', path)
+
+
+print("\nIf the build fails, run patch.py and try again\n"
+        "----------------------------------------------\n", file=sys.stderr)
 
 libs = ['sfml-graphics', 'sfml-window', 'sfml-audio', 'sfml-system']
 
 if USE_CYTHON:
-    ext_modules = [Extension('sf', ['sf.pyx'],
+    ext_modules = [Extension('sfml', [src('sfml.pyx'), src('hacks.cpp')],
                              language='c++',
                              libraries=libs)]
 else:
-    ext_modules = [Extension('sf', ['sf.cpp'],
+    ext_modules = [Extension('sfml', [src('sfml.cpp'), src('hacks.cpp')],
                              libraries=libs)]
 
+with open('README.md', 'r') as f:
+    long_description = f.read()
+
+kwargs = dict(name='pySFML',
+              ext_modules=ext_modules,
+              version='0.1.2',
+              description='A Python binding for SFML 2',
+              long_description=long_description,
+              author='Bastien Léonard',
+              author_email='bastien.leonard@gmail.com',
+              url='https://github.com/bastienleonard/pysfml2-cython',
+              license='BSD',
+              scripts=glob.glob(os.path.join('examples', '*.py')),
+              data_files=[
+                  ('', glob.glob('*.dll')),
+                  (os.path.join('lib', 'site-packages', 'pysfml2-cython'),
+                   ['LICENSE.txt', 'SFML-LICENSE.txt'])],
+              classifiers=[
+                  'Development Status :: 4 - Beta',
+                  'Intended Audience :: Developers',
+                  'License :: OSI Approved :: BSD License',
+                  'Operating System :: OS Independent',
+                  'Programming Language :: Cython',
+                  'Topic :: Games/Entertainment',
+                  'Topic :: Multimedia',
+                  'Topic :: Software Development :: Libraries :: Python Modules'
+                  ])
 
 if USE_CYTHON:
-    setup(
-        name = 'PySFML 2',
-        cmdclass = {'build_ext': build_ext},
-        ext_modules = ext_modules,
-        version='0.0.1',
-        description='A Python binding for SFML 2',
-        author='Bastien Léonard',
-        author_email='bastien.leonard@gmail.com',
-        url='https://github.com/bastienleonard/pysfml2-cython'
-        )
+    kwargs.update(cmdclass={'build_ext': Cython.Distutils.build_ext})
 else:
-    setup(
-        name = 'PySFML 2',
-        ext_modules = ext_modules,
-        version='0.0.1',
-        description='A Python binding for SFML 2',
-        author='Bastien Léonard',
-        author_email='bastien.leonard@gmail.com',
-        url='https://github.com/bastienleonard/pysfml2-cython'
-        )
+    class CustomBuildExt(build_ext):
+        """This class is used to build the Windows binary releases."""
+
+        def build_extensions(self):
+            cc = self.compiler.compiler_type
+
+            if cc == 'mingw32':
+                for e in self.extensions:
+                    # e.extra_compile_args = []
+                    e.extra_link_args = ['-static-libgcc', '-static-libstdc++']
+
+            build_ext.build_extensions(self)
+
+    kwargs.update(cmdclass={'build_ext': CustomBuildExt})
+
+setup(**kwargs)

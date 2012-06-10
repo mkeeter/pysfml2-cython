@@ -1,18 +1,17 @@
 #! /usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import sf
+import sfml as sf
 
 
 def main():
     window = sf.RenderWindow(sf.VideoMode(640, 480), 'Title')
     window.framerate_limit = 60
     text = sf.Text(u'éèà', sf.Font.DEFAULT_FONT, 100)
-    print 'Test:', text.string, repr(text.string)
     text.color = sf.Color.BLACK
     text.style = sf.Text.UNDERLINED | sf.Text.BOLD | sf.Text.ITALIC
-    text.x = window.width / 2.0 - text.rect.width / 2.0
-    text.y = window.height / 2.0 - text.rect.height / 2.0
+    text.x = window.width / 2.0 - text.global_bounds.width / 2.0
+    text.y = window.height / 2.0 - text.global_bounds.height / 2.0
     running = True
 
     while running:

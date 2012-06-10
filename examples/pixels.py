@@ -3,7 +3,7 @@
 
 import struct
 
-import sf
+import sfml as sf
 
 
 # This example shows how you can manipulate the raw string given by
@@ -25,6 +25,8 @@ def main():
 
             if s:
                 color = sf.Color(*unpacker.unpack(s))
+                mean = (color.r + color.g + color.b) / 3
+                color.r = color.g = color.b = mean
                 new_image[i,j] = color
             else:
                 pass

@@ -1,0 +1,58 @@
+0.1.2:
+
+- Added copy() methods in Transform, IntRect, FloatRect, Time and Sprite.
+- RenderTarget.draw() now also accepts a tuple of vertices. Also fixed
+  error handling when the objects contained in the list/tuple have the
+  wrong type.
+- Added == and != operators in IntRect and FloatRect.
+- Transform's constructor now creates an identity transform when
+  called with no arguments.
+- Transform now supports the *= operator. (It already worked in the
+  past, because Python will automatically use the * operator if *=
+  isn't provided, but it's slower.)
+- SoundBuffer.save_to_file() now raises an exception in case of
+  failure. (In the past, it didn't report errors in any way.)
+- Removed Chunk.sample_count and SoundBuffer.sample_count. Instead,
+  use len(Chunk.samples) and len(SoundBuffer.samples),
+  respectively.
+- SoundBuffer.load_from_samples() now uses strings/bytes (for Python
+  2/3, respectively) instead of list.
+- Fixed bugs in Font, Image and Shader classmethods that load from
+  strings/bytes objects.
+- Added Joystick.update().
+- Transformable isn't abstract anymore, and can be inherited safely.
+- Completed the events and audio documentation, added documentation
+  for some graphics classes.
+- Expanded the tutorial for C++ developers.
+
+0.1.1:
+
+- The seconds(), milliseconds() and microseconds() functions are
+  removed. Use the Time constructor with keyword arguments instead,
+  e.g. milliseconds(200) becomes Time(milliseconds=200).
+- Made Sprite more straightforward to inherit, __cinit__() won't raise
+  errors because it automatically gets passed the constructor
+  arguments anymore.
+- Fixed a bug in Time where some arithemtic operators would always
+  raise an exception.
+- Fixed a bug in RenderStates where internal attributes and properties
+  got mismatched because they had the same name.
+- Added a __repr__() method in Time (mostly to have more readable unit
+  test errors, __str__() already existed in the past).
+- Documentation: added a "caveats" page, and a new tutorial for people
+  who are coming from a C++ SFML background.
+- Added some unit tests.
+
+0.1:
+
+- The module is now called sfml. To keep using the sf prefix, import the module
+  with “import sfml as sf”.
+- Python 3 users don't need to use bytes instead of strings anymore. When a C++
+  method expects a byte string and the user passes a Unicode object, it is
+  encoded to a byte string with sfml.default_encoding (UTF-8 by default, you can
+  change it as needed).
+- Added the Listener class.
+- Added audio streaming (still lacking performance-wise).
+- Added Texture.copy_to_image().
+- Improved examples.
+- Fixed various bugs and memory leaks.

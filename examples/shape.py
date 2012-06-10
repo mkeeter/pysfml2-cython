@@ -1,47 +1,71 @@
 #! /usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import sf
+from random import randint
+
+import sfml as sf
+
+
+def random_color():
+    return sf.Color(randint(0, 255), randint(0, 255), randint(0, 255))
+
+def random_position(window):
+    return (randint(0, window.view.width), randint(0, window.view.height))
+
+
+class CustomShape(sf.Shape):
+    def __init__(self):
+        sf.Shape.__init__(self)
+        self.fill_color = sf.Color.RED
+        self.points = [(400, 200), (450, 150), (500, 200), (550, 200),
+                       (500, 250), (420, 300)]
+        self.update()
+
+    def get_point_count(self):
+        return len(self.points)
+
+    def get_point(self, index):
+        return self.points[index]
 
 
 def main():
-    window = sf.RenderWindow(sf.VideoMode(640, 480), 'Shape example')
+    window = sf.RenderWindow(sf.VideoMode(800, 600), 'Shape example')
     window.framerate_limit = 60
     running = True
-    circle0 = sf.Shape.circle(50, 50, 50, sf.Color.YELLOW)
-    circle0.position = (100, 100)
-    
-    rect0 = sf.Shape.rectangle(0, 0, 100, 50, sf.Color.GREEN, 2, sf.Color.BLUE)
-    rect0.position = (200, 400)
-    
-    rect1 = sf.Shape.rectangle(0.0, 0.0, 50.0, 50.0,
-                                         sf.Color.CYAN)
-    rect1.position = (400, 100)
-    
-    line0 = sf.Shape.line(0, 0, 640, 480, 5, sf.Color.RED)
-    
-    points = [(0.0, 50.0), (50.0, 50.0), (25.0, 0.0)]
-    shape0 = sf.Shape()
+    clock = sf.Clock()
 
-    for point in points:
-        shape0.add_point(point[0], point[1])
+    custom_shapes = [CustomShape()]
+    rectangles = []
+    circles = []
 
-    shape0.position = (300, 200)
-    shape0.color = sf.Color(50, 100, 200, 128)
-    shape0.origin = (25.0, 32.0)
-    
-    shapes = [line0, circle0, rect0, rect1, shape0]
+    for i in range(30):
+        circle = sf.CircleShape(randint(5, 20))
+        circle.fill_color = random_color()
+        circle.position = random_position(window)
+        circles.append(circle)
+
+    for i in range(100):
+        rectangle = sf.RectangleShape((randint(10, 30), randint(10, 30)))
+        rectangle.position = random_position(window)
+        rectangle.fill_color = random_color()
+        rectangle.outline_color = random_color()
+        rectangle.outline_thickness = randint(1, 2)
+        rectangles.append(rectangle)
 
     while running:
         for event in window.iter_events():
             if event.type == sf.Event.CLOSED:
                 running = False
 
-        window.clear(sf.Color.WHITE)
-        shape0.rotate(2)
+        frame_time = clock.restart().as_milliseconds()
 
-        for s in shapes:
-            window.draw(s)
+        for r in rectangles:
+            r.rotate(frame_time * 0.3)
+
+        window.clear(sf.Color.WHITE)
+
+        for shape in custom_shapes + rectangles + circles:
+            window.draw(shape)
 
         window.display()
 

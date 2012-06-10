@@ -5,14 +5,14 @@ import sfml as sf
 
 
 def main():
-    window = sf.RenderWindow(sf.VideoMode(640, 480), 'Image example')
+    window = sf.RenderWindow(sf.VideoMode(640, 480), 'SFML vertices example')
     window.framerate_limit = 60
-    logo = sf.Image.load_from_file('python-logo.png')
-    princess = sf.Image.load_from_file('princess.png')
-    logo.copy(princess, 0, 0, sf.IntRect(0, 0, 0, 0), True)
-    texture = sf.Texture.load_from_image(logo)
-    sprite = sf.Sprite(texture)
     running = True
+    vertices = [sf.Vertex((200, 150), sf.Color.RED),
+                sf.Vertex((200, 350), sf.Color.BLUE),
+                sf.Vertex((400, 350), sf.Color.GREEN),
+                sf.Vertex((400, 150), sf.Color.YELLOW)]
+
 
     while running:
         for event in window.iter_events():
@@ -20,7 +20,7 @@ def main():
                 running = False
 
         window.clear(sf.Color.WHITE)
-        window.draw(sprite)
+        window.draw(vertices, sf.TRIANGLES)
         window.display()
 
     window.close()
